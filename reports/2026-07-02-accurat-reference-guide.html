@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ACCURET+ Reference Guide — Verified against Manual v1.0</title>
+  <meta name="description" content="Comprehensive ACCURET+ controller reference covering architecture, registers, commissioning, motion commands, protections, sequences, and error system — all cross-checked against the official ACCURET+ Operation and Software Manual v1.0.">
+  <meta property="og:title" content="ACCURET+ Reference Guide — Verified against Manual v1.0">
+  <meta property="og:description" content="Comprehensive ACCURET+ controller reference for PCB drilling machine engineers.">
+  <meta property="og:type" content="article">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['system-ui','ui-sans-serif','sans-serif'], mono: ['JetBrains Mono','Consolas','monospace'] } } } };
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+
+  <link id="hljs-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    const isDark = document.documentElement.classList.contains('dark');
+    mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' });
+    window.__mermaid = mermaid;
+  </script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    onload='renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}]})'></script>
+
+  <style>
+    @media (prefers-reduced-motion:reduce) { * { animation:none!important;transition:none!important; } }
+    @media print {
+      .no-print { display:none!important; }
+      body { color:#000;background:#fff; }
+      a { color:inherit;text-decoration:underline; }
+      details { display:block; } details>summary { display:none; }
+    }
+    pre code.hljs { border-radius:.5rem;padding:1rem;font-size:.85rem; }
+    details>summary { cursor:pointer;user-select:none; }
+    details>summary::marker { content:"▸ "; }
+    details[open]>summary::marker { content:"▾ "; }
+    .toc a { display:block;padding:.2rem 0;opacity:.55;transition:opacity .15s;font-size:.85rem; }
+    .toc a:hover,.toc a.active { opacity:1; }
+    .toc a.active { font-weight:600; }
+    .copy-btn { position:absolute;top:.5rem;right:.5rem; }
+    pre.has-copy { position:relative; }
+    .badge { display:inline-block;padding:.15em .6em;border-radius:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em; }
+    .badge-err { background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3); }
+    .badge-warn { background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3); }
+    .badge-ok { background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3); }
+    .badge-info { background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.25); }
+    .callout { border-left:3px solid #3b82f6;padding:.6rem 1rem;border-radius:0 .5rem .5rem 0;margin:.8rem 0;font-size:.88rem; }
+    .callout.err { border-color:#ef4444; background:rgba(239,68,68,.06); }
+    .callout.warn { border-color:#f59e0b; background:rgba(245,158,11,.06); }
+    .callout.ok { border-color:#22c55e; background:rgba(34,197,94,.06); }
+    .callout .label { font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem; }
+    .callout.err .label { color:#ef4444; }
+    .callout.warn .label { color:#f59e0b; }
+    .callout.ok .label { color:#22c55e; }
+    .corrected { background:rgba(34,197,94,.08);border-left:3px solid #22c55e;padding:.4rem .8rem;border-radius:0 .4rem .4rem 0;font-size:.8rem;margin:.4rem 0; }
+    .corrected::before { content:"✓ Corrected: ";color:#22c55e;font-weight:700; }
+  </style>
+</head>
+
+<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
+
+<div class="fixed top-4 right-4 z-50 flex gap-2 no-print">
+  <button id="theme-toggle" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/70 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">☼ / ☾</button>
+  <button onclick="window.print()" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/70 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">print</button>
+</div>
+
+<div class="max-w-6xl mx-auto px-6 py-12 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
+
+  <nav class="toc lg:sticky lg:top-12 self-start text-sm mb-8 lg:mb-0 no-print">
+    <div class="font-semibold mb-2 text-zinc-500 uppercase tracking-wider text-xs">Contents</div>
+    <a href="#architecture">Architecture</a>
+    <a href="#registers">Register System</a>
+    <a href="#position-registers">Position Registers</a>
+    <a href="#commissioning">Commissioning</a>
+    <a href="#motion">Motion Commands</a>
+    <a href="#homing-protections">Homing &amp; Protections</a>
+    <a href="#hw-limits">HW Limit Switches</a>
+    <a href="#sequences">Sequences</a>
+    <a href="#errors">Error System</a>
+    <a href="#pid">PID Control</a>
+    <a href="#quick-ref">Quick Reference</a>
+    <a href="#corrections">Corrections Log</a>
+  </nav>
+
+  <main class="min-w-0">
+
+    <header class="mb-12">
+      <p class="text-sm text-zinc-500 mb-2">REFERENCE GUIDE · <time>2026-07-02</time></p>
+      <h1 class="text-4xl font-bold tracking-tight mb-3">ACCURET+ Reference Guide</h1>
+      <p class="text-lg text-zinc-600 dark:text-zinc-400">All register references and procedures verified against the <strong>ACCURET+ Operation and Software Manual v1.0 (03.12.25)</strong>. Previously identified inaccuracies have been corrected.</p>
+      <div class="flex gap-2 mt-3 flex-wrap">
+        <span class="badge badge-info">Manual-verified</span>
+        <span class="badge badge-ok">6 corrections</span>
+        <span class="badge badge-info">TCP/IP + USB</span>
+      </div>
+    </header>
+
+    <!-- Architecture -->
+    <section id="architecture" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">1. Architecture — Three Execution Layers</h2>
+
+      <pre class="mermaid">
+graph TD
+    subgraph "ACCURET+ Controller"
+        A["FPGA — CLTI<br/>Current loop · 25 μs<br/>Encoder · Commutation"] --> B["DSP — PLTI<br/>Position loop · PID<br/>Trajectory · S-curve"]
+        B --> C["Background<br/>TCP/IP · USB · Sequences<br/>Command processing"]
+    end
+    C --> D["Host PC<br/>COMET / EDI"]
+    B --> E["Motor + Encoder"]
+    A --> E
+    style A fill:#3b82f6,color:#fff
+    style B fill:#6366f1,color:#fff
+    style C fill:#8b5cf6,color:#fff
+      </pre>
+
+      <table class="w-full text-sm border-collapse mt-4">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Layer</th><th class="p-2 text-left">Hardware</th><th class="p-2 text-left">Cycle</th><th class="p-2 text-left">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2 font-semibold"><code>CLTI</code></td><td class="p-2">FPGA</td><td class="p-2">25 μs</td><td class="p-2">Current loop, encoder reading, commutation, phase current limits. Hardware-guaranteed timing.</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2 font-semibold"><code>PLTI</code></td><td class="p-2">DSP</td><td class="p-2">~100 μs</td><td class="p-2">Position loop (PID), setpoint generation, S-curve trajectory calculation, feedforward.</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-semibold">Background</td><td class="p-2">CPU</td><td class="p-2">Cooperative</td><td class="p-2">TCP/IP + USB communication, Sequence execution, command processing. Your code runs here.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <span class="label">Key insight</span>
+        The FPGA and DSP handle real-time physics at μs granularity. Your sequences run in the background — they issue commands like <code>MVE</code> and <code>WTM</code> blocks until the DSP reports completion.
+      </div>
+    </section>
+
+    <!-- Register System -->
+    <section id="registers" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">2. Register System</h2>
+
+      <h3 class="text-lg font-semibold mt-6 mb-3">Register Prefixes</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Prefix</th><th class="p-2 text-left">Meaning</th><th class="p-2 text-left">R/W</th><th class="p-2 text-left">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K</code></td><td class="p-2">Setting (configuration)</td><td class="p-2">R/W</td><td class="p-2"><code>K40</code> = homing mode</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>M</code></td><td class="p-2">Monitoring (read-only)</td><td class="p-2">R</td><td class="p-2"><code>M64</code> = active errors</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>X</code></td><td class="p-2">User (general-purpose)</td><td class="p-2">R/W</td><td class="p-2"><code>X10.0</code> = user variable</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>C</code></td><td class="p-2">Configuration (reboot)</td><td class="p-2">R/W</td><td class="p-2"><code>C201</code> = comm mode</td></tr>
+          <tr><td class="p-2"><code>L</code></td><td class="p-2">Look-up table</td><td class="p-2">R/W</td><td class="p-2"><code>L</code> registers for arrays</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-3">Format Suffixes (Type Declarations)</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Suffix</th><th class="p-2 text-left">Type</th><th class="p-2 text-left">Example</th><th class="p-2 text-left">Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>F</code></td><td class="p-2">float (32-bit)</td><td class="p-2"><code>KF1</code></td><td class="p-2">PID gains, current limits</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>L</code></td><td class="p-2">long (64-bit)</td><td class="p-2"><code>KL30</code></td><td class="p-2">Position, speed, limits</td></tr>
+          <tr><td class="p-2">(none)</td><td class="p-2">int (32-bit)</td><td class="p-2"><code>K40</code></td><td class="p-2">Modes, flags, enums</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-3">SDRAM vs Flash</h3>
+      <div class="callout warn">
+        <span class="label">Critical — do not forget</span>
+        All register writes go to <strong>SDRAM (volatile)</strong>. <code>SAV.&lt;axis&gt; = &lt;P1&gt;</code> copies to <strong>flash (non-volatile)</strong>. At boot, <code>RES</code> auto-restores flash → SDRAM. P1 values: <code>0</code> = all, <code>3</code> = K registers, <code>5</code> = X registers, <code>7</code> = sequences. Forgetting to <code>SAV</code> after tuning is the #1 cause of "it worked yesterday" bugs.
+      </div>
+
+      <h3 class="text-lg font-semibold mt-6 mb-3">ML63 — 64-bit Status Register</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Bit</th><th class="p-2 text-left">Meaning</th><th class="p-2 text-left">When you check it</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">0–15</td><td class="p-2">User status (set via K177)</td><td class="p-2">Custom application flags</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">17</td><td class="p-2">Communication established</td><td class="p-2">After boot — confirm host connection</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><strong>19</strong></td><td class="p-2"><strong>Axis in error</strong></td><td class="p-2"><strong>Before every move</strong></td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">20</td><td class="p-2">Warning active</td><td class="p-2">During operation</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><strong>35</strong></td><td class="p-2"><strong>Homing completed</strong></td><td class="p-2"><strong>Before absolute positioning</strong></td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><strong>36</strong></td><td class="p-2"><strong>Motor powered on</strong></td><td class="p-2"><strong>Before any move command</strong></td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><strong>40</strong></td><td class="p-2"><strong>In position window</strong></td><td class="p-2"><strong>After each move — settle check</strong></td></tr>
+          <tr><td class="p-2">42</td><td class="p-2">In speed window</td><td class="p-2">Speed settle check</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Position Registers -->
+    <section id="position-registers" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">3. Position Registers (Verified)</h2>
+
+      <div class="corrected">Previously: ML0 was called "Raw Position" and ML1 was "Setpoint Position". Now corrected to match manual §5.2.</div>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Manual Name</th><th class="p-2 text-left">Description</th><th class="p-2 text-left">Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>ML0</code></td><td class="p-2">Position setpoint</td><td class="p-2">The reference position the controller is commanding. This is the base value before the SET offset (ML4).</td><td class="p-2">incr</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>ML1</code></td><td class="p-2">Enhanced measured position</td><td class="p-2">The actual measured position from the encoder, after all processing (scale mapping, compensation, etc.). <strong>This is where the motor really is.</strong></td><td class="p-2">incr</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>ML2</code></td><td class="p-2">Position tracking error</td><td class="p-2"><code>ML0 − ML1</code>. The instantaneous difference between setpoint and actual position.</td><td class="p-2">incr</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>ML4</code></td><td class="p-2">SET offset</td><td class="p-2">The offset applied by <code>SET</code> command. <code>ML6 = ML0 + ML4</code>.</td><td class="p-2">incr</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>ML6</code></td><td class="p-2">Adjusted reference position</td><td class="p-2"><code>ML0 + ML4</code>. The coordinate-system position used by the PID controller. <strong>This is what MVE moves to.</strong></td><td class="p-2">m or t (LPI)</td>
+          </tr>
+          <tr>
+            <td class="p-2"><code>ML7</code></td><td class="p-2">Adjusted measured position</td><td class="p-2"><code>ML1 + ML4</code>. The actual position in the coordinate system. Used for stroke limit checking.</td><td class="p-2">m or t (LPI)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <span class="label">Key concept</span>
+        <code>ML4</code> is the offset between the position setpoint and the coordinate system. When you execute <code>SET.0 = 0L</code>, ML4 is recalculated so that ML6 = 0. This is how you <strong>zero the coordinate system</strong> at the home position. ML0 never changes — only ML4 does.
+      </div>
+    </section>
+
+    <!-- Commissioning -->
+    <section id="commissioning" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">4. Commissioning Pipeline</h2>
+
+      <p class="mb-4">The 8-step hardware initialization sequence for commissioning an axis. Even if COMET automates most of this, understanding each step is essential for debugging.</p>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">#</th><th class="p-2 text-left">Step</th><th class="p-2 text-left">Register</th><th class="p-2 text-left">What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">1</td><td class="p-2">Motor type</td><td class="p-2"><code>K241</code></td><td class="p-2">Linear (1) or rotary (2). Wrong setting = wrong commutation.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">2</td><td class="p-2">Encoder</td><td class="p-2"><code>K600</code></td><td class="p-2">2=1Vpp, 4=TTL, 5=EnDat 2.2, 16=EnDat 3. Requires SAV + reboot.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">3</td><td class="p-2">Commutation</td><td class="p-2"><code>K56</code></td><td class="p-2">Motor phase direction. <code>AUT = 2</code> for auto-configure.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">4</td><td class="p-2">Phasing</td><td class="p-2"><code>K90</code></td><td class="p-2">1=pulses (ironcore), 2=constant current, 7=small movement (ironless).</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">5</td><td class="p-2">Current limits</td><td class="p-2"><code>KF60, KF83</code></td><td class="p-2">KF60 = current ref limit (input), KF83 = phase overcurrent (output). Chain: KF83 ≥ KF60 ≥ KF61.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">6</td><td class="p-2">I²t protection</td><td class="p-2"><code>KF84, KF85</code></td><td class="p-2">Motor thermal model. KF84 = time constant, KF85 = current level. Error 4'000 when tripped.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">7</td><td class="p-2">PID tuning</td><td class="p-2"><code>KF1, KF2, KF4</code></td><td class="p-2">P=immediate correction, I=steady-state, D=damping. KF5=anti-windup.</td></tr>
+          <tr><td class="p-2">8</td><td class="p-2">Homing</td><td class="p-2"><code>K40</code></td><td class="p-2">0–1=end stop, 2–3=home switch, 8–11=ref mark, 22=immediate, 46=absolute encoder.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-3">Current Limit Chain (Critical)</h3>
+      <div class="callout err">
+        <span class="label">Must be correct</span>
+        The chain must be: <strong>KF83 ≥ KF60 ≥ KF61</strong>. If KF60 &lt; KF61, the current reference limit clips before the force reference. If KF83 &lt; KF60, phase overcurrent trips during normal operation.
+      </div>
+    </section>
+
+    <!-- Motion Commands -->
+    <section id="motion" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">5. Motion Commands</h2>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">Core Motion Commands</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Command</th><th class="p-2 text-left">Syntax</th><th class="p-2 text-left">PCB Drilling Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>MVE</code></td><td class="p-2"><code>MVE.0 = 100000L</code></td><td class="p-2">Absolute move to target position</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>RMVE</code></td><td class="p-2"><code>RMVE.0 = 1000L</code></td><td class="p-2">Relative move from current position</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>IND</code></td><td class="p-2"><code>IND.0</code></td><td class="p-2">Start homing sequence</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>STP</code></td><td class="p-2"><code>STP.0</code></td><td class="p-2">Normal stop (sequence continues)</td></tr>
+          <tr><td class="p-2"><code>BRK</code></td><td class="p-2"><code>BRK.0</code></td><td class="p-2">Emergency brake (max deceleration)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Wait/Synchronization Commands</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Command</th><th class="p-2 text-left">Waits for</th><th class="p-2 text-left">PCB Usage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>WTM.0</code></td><td class="p-2">Motion complete</td><td class="p-2">Wait for X/Y at hole before Z plunge</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>WTT.0 = 0.1</code></td><td class="p-2">Time (seconds)</td><td class="p-2">Dwell — let drill fully retract</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>WTP.0 = 50000L</code></td><td class="p-2">Position threshold</td><td class="p-2">Wait until Z above safe height</td></tr>
+          <tr><td class="p-2"><code>WTW.0 = 100L, 0.5</code></td><td class="p-2">Position window + timeout</td><td class="p-2">Confirm drill within ±range, with timeout</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout err">
+        <span class="label">Always use timeouts</span>
+        <code>WTM.0</code> without a timeout blocks forever if the axis never reaches target. Always use <code>WTM.0 = 10.0</code> (10 second timeout). A hung sequence on a PCB drill means the machine stops mid-cycle.
+      </div>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Position Window (Verified)</h3>
+      <div class="corrected">Previously: <code>KL38</code> was incorrectly used for position window. Manual §8.10.3: <code>K38 = POSWT</code> (time), <code>KL39 = POSW</code> (range), <code>KL38 = DUAL</code> (home switch assignment).</div>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Name</th><th class="p-2 text-left">Description</th><th class="p-2 text-left">Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>K38</code></td><td class="p-2">POSWT</td><td class="p-2">Minimum duration the motor must stay within the window (MLTI units)</td><td class="p-2">s</td>
+          </tr>
+          <tr>
+            <td class="p-2"><code>KL39</code></td><td class="p-2">POSW</td><td class="p-2">Half-range of the position window (±KL39 from target)</td><td class="p-2">m or t (LPI)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre><code class="language-c">// Example: position window setup
+K38.0 = 0.01;           // 10 ms settle time
+KL39.0 = 0.000001;      // ±1 μm window
+// Bit 40 of ML63 = 1 when motor is in-window for K38 duration</code></pre>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">S-Curve Motion Profile</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Parameter</th><th class="p-2 text-left">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL1</code></td><td class="p-2">Target speed</td><td class="p-2">increments/s</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL2</code></td><td class="p-2">Acceleration</td><td class="p-2">increments/s²</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL3</code></td><td class="p-2">Deceleration</td><td class="p-2">Defaults to KL2 if 0</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL4</code></td><td class="p-2">Jerk time</td><td class="p-2">Smooths acceleration transition</td></tr>
+          <tr><td class="p-2"><code>K201</code></td><td class="p-2">Motion mode</td><td class="p-2">0=normal, 1=concatenated (no stop between moves)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout ok">
+        <span class="label">Multi-axis synchronization</span>
+        <code>MVE.(0,1) = X, Y;</code> issues both axes in the same cycle — perfectly synchronized. <code>MVE.0 = X; MVE.1 = Y;</code> is <strong>not</strong> synchronized (separate cycles). Use <code>STA</code>/<code>STI</code> for predefined trajectory synchronization.
+      </div>
+    </section>
+
+    <!-- Homing & Protections -->
+    <section id="homing-protections" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">6. Homing &amp; Protections</h2>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">Software Stroke Limits (Verified)</h3>
+      <div class="corrected">Previously: <code>K34–K37</code> was used as a catch-all. Manual §8.10.2: <code>KL34 = MINSL</code>, <code>K35 = SLS mode</code>, <code>KL35 = MAXSL</code>, <code>K36 = MODESL</code> (enable bitfield).</div>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Name</th><th class="p-2 text-left">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>KL34</code></td><td class="p-2">MINSL</td><td class="p-2">Lower limit of the Software Stroke Limits protection</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>K35</code></td><td class="p-2">SLS mode</td><td class="p-2">0=end stop positive, 1=end stop negative, 2=limit switch positive, 3=limit switch negative</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><code>KL35</code></td><td class="p-2">MAXSL</td><td class="p-2">Upper limit of the Software Stroke Limits protection</td>
+          </tr>
+          <tr>
+            <td class="p-2"><code>K36</code></td><td class="p-2">MODESL</td><td class="p-2">Enable bitfield for stroke limits. Bit 1 = check real position (ML7) against limits. If ML7 beyond KL34/KL35, error 65'000.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Homing Parameters</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K40</code></td><td class="p-2">Homing mode: 0–1=end stop, 2–3=home switch, 8–11=ref mark, 22=immediate, 46=absolute encoder</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL41</code></td><td class="p-2">Homing speed</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL42</code></td><td class="p-2">Homing acceleration</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL45</code></td><td class="p-2">Physical offset (from home sensor to machine zero)</td></tr>
+          <tr><td class="p-2"><code>KL46</code></td><td class="p-2">Logical offset (shift the coordinate system)</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Other Protections</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Protection</th><th class="p-2 text-left">Register</th><th class="p-2 text-left">Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">Overspeed</td><td class="p-2"><code>KL31</code></td><td class="p-2">24'000</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2">Position tracking error</td><td class="p-2"><code>KL30</code></td><td class="p-2">23'000</td></tr>
+          <tr><td class="p-2">Power sag</td><td class="p-2"><code>K176</code></td><td class="p-2">— (controlled shutdown)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- HW Limit Switches -->
+    <section id="hw-limits" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">7. Hardware Limit Switches</h2>
+
+      <p class="mb-4">Configure external sensors (ToF, proximity, mechanical) as hardware limit switches. The controller treats these as hard stops — triggering causes immediate motor stop.</p>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">Setup Procedure</h3>
+      <div class="space-y-3">
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</span>
+          <div><strong>Set K58 = 1</strong> to enable hardware limit switch I/O type (FDIN/DIN pins). Manual §8.7.3.1.</div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</span>
+          <div><strong>Set K33 = 1</strong> to enable limit switch protection. Manual §8.7.3.</div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</span>
+          <div><strong>Assign positive limit to KL36</strong> using bitmask (e.g., <code>KL36:0 = 0x100000</code> for DIN5/X21_PIN_5). Subindex 0 = active high, 1 = active low. Manual §8.7.3.1.</div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">4</span>
+          <div><strong>Assign negative limit to KL37</strong> using bitmask (same format as KL36). Manual §8.7.3.1.</div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">5</span>
+          <div><strong>Verify with M45:</strong> Bit 0 = positive limit triggered, Bit 1 = negative limit triggered, Bit 2 = home switch triggered. Manual §8.7.3.2.</div>
+        </div>
+        <div class="flex gap-3 items-start">
+          <span class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">6</span>
+          <div><strong>SAV + reboot</strong> to persist.</div>
+        </div>
+      </div>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Register Summary</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Name</th><th class="p-2 text-left">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K58</code></td><td class="p-2">Limit switch I/O type</td><td class="p-2">0=none, 1=FDIN/DIN, 2=encoder L1/L2, 3=encoder L/H</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K33</code></td><td class="p-2">Enable protection</td><td class="p-2">0=disabled, 1=enabled</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL36</code></td><td class="p-2">Positive limit FDIN mask</td><td class="p-2">Subindex 0=active high, 1=active low</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL37</code></td><td class="p-2">Negative limit FDIN mask</td><td class="p-2">Subindex 0=active high, 1=active low</td></tr>
+          <tr><td class="p-2"><code>M45</code></td><td class="p-2">Status</td><td class="p-2">Bit 0=pos limit, Bit 1=neg limit, Bit 2=home switch</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="label">Upper limit not triggering?</span>
+        Common issue: upper limit assigned to <code>KL37</code> (negative) instead of <code>KL36</code> (positive). Check M45 bits when sensor is physically triggered. Verify subindex polarity (0 vs 1). Verify K32 (invert/swap encoder limits) is not interfering.
+      </div>
+    </section>
+
+    <!-- Sequences -->
+    <section id="sequences" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">8. Sequence Programming</h2>
+
+      <p class="mb-4">The ETEL Sequence language is a C subset. Key concepts for embedded engineers:</p>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">Entry Points</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Function</th><th class="p-2 text-left">Purpose</th><th class="p-2 text-left">How it runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>autostart()</code></td><td class="p-2">Boot entry point</td><td class="p-2">Runs automatically at controller boot</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>func0()</code> … <code>func1023()</code></td><td class="p-2">Callable functions</td><td class="p-2"><code>JMP.&lt;axis&gt; = &lt;n&gt;, &lt;thread&gt;</code></td></tr>
+          <tr><td class="p-2"><code>error_handler0()</code> … <code>error_handler3()</code></td><td class="p-2">Error handlers</td><td class="p-2">Auto-jumped when error occurs on thread</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Thread Rules</h3>
+      <ul class="list-disc pl-5 space-y-1 text-sm">
+        <li><strong>DUAL:</strong> 2 threads per axis (0, 1). <strong>QUAD:</strong> 1 thread per axis (0).</li>
+        <li>Threads are <strong>cooperative</strong>, not preemptive. <code>yield()</code> gives up CPU.</li>
+        <li><strong>Always use <code>yield()</code> in polling loops</strong> — a loop without yield freezes the entire controller.</li>
+        <li>Local variables only at function start (before any statements). No inline declarations.</li>
+        <li>Arrays can only be <strong>global</strong>. No pointers. No structs. No recursion.</li>
+      </ul>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Data Types &amp; Suffixes</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Type</th><th class="p-2 text-left">Size</th><th class="p-2 text-left">Suffix</th><th class="p-2 text-left">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>int</code></td><td class="p-2">32-bit</td><td class="p-2">(none)</td><td class="p-2"><code>42</code></td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>long</code></td><td class="p-2">64-bit</td><td class="p-2"><code>L</code></td><td class="p-2"><code>42L</code></td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>float</code></td><td class="p-2">32-bit</td><td class="p-2"><code>F</code></td><td class="p-2"><code>3.14F</code></td></tr>
+          <tr><td class="p-2"><code>double</code></td><td class="p-2">64-bit</td><td class="p-2"><code>D</code></td><td class="p-2"><code>1.0D</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <span class="label">Silent bug</span>
+        <code>MVE.0 = 5.0;</code> — the <code>5.0</code> is treated as integer increments, not ISO units. Must write <code>5.0D</code> or <code>5.0F</code> for ISO values. The controller moves, but to the wrong position.
+      </div>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Typical Drilling Sequence</h3>
+      <pre><code class="language-c">#pragma linear_units ("mm, mm/s, mm/s²")
+#define _X_ 0
+#define _Y_ 1
+
+double holes[][2] = {
+    {10.0D, 20.5D}, {10.5D, 20.5D}, {11.0D, 20.5D},
+};
+#define NUM_HOLES 3
+
+void drillCycle(void)
+{
+    for (int i = 0; i < NUM_HOLES; i++) {
+        // 1. Move XY to hole position
+        MVE.(_X_, _Y_) = iso2inc_l(holes[i][0], LPI_M),
+                         iso2inc_l(holes[i][1], LPI_M);
+        WTM.(_X_, _Y_);
+
+        // 2. Plunge Z
+        MVE.2 = iso2inc_l(-1.6D, LPI_M);
+        WTM.2;
+
+        // 3. Retract Z
+        MVE.2 = iso2inc_l(5.0D, LPI_M);
+        WTM.2;
+    }
+}
+
+void autostart(void)
+{
+    RST.ALL;
+    PWR.(_X_, _Y_, 2) = 1;
+    IND.(_X_, _Y_, 2);
+    WTM.(_X_, _Y_, 2);
+    drillCycle();
+}</code></pre>
+
+      <div class="callout err">
+        <span class="label">Critical safety rule</span>
+        Never move X/Y while Z is still in the hole. Always <code>WTM.2</code> after Z retract before moving X/Y. Skipping WTM = snapped drill bit and ruined board.
+      </div>
+    </section>
+
+    <!-- Error System -->
+    <section id="errors" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">9. Error System</h2>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">Three Severity Levels</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Level</th><th class="p-2 text-left">Register</th><th class="p-2 text-left">Behavior</th><th class="p-2 text-left">Key Codes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><span class="badge badge-err">Error</span></td>
+            <td class="p-2"><code>M64</code></td>
+            <td class="p-2">Stops motor, red LED, requires reset</td>
+            <td class="p-2">2'000=overcurrent, 4'000=motor I²t, 11'000=controller I²t, 20'000=encoder, 24'000=overspeed, 65'000=stroke limit</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2"><span class="badge badge-warn">Warning</span></td>
+            <td class="p-2"><code>M66</code></td>
+            <td class="p-2">Motor continues, must manually clear</td>
+            <td class="p-2">4'000=I²t 50%, 23'000=tracking error >50% of KL30</td>
+          </tr>
+          <tr>
+            <td class="p-2"><span class="badge badge-info">Info</span></td>
+            <td class="p-2"><code>M68</code></td>
+            <td class="p-2">Auto-clears when resolved</td>
+            <td class="p-2">Various low-severity informational flags</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Error Propagation</h3>
+      <ul class="list-disc pl-5 space-y-1 text-sm">
+        <li><code>K140</code> = group membership (bitmask of which group each axis belongs to)</li>
+        <li><code>K141</code> = publish group mask (which groups this axis broadcasts errors to)</li>
+        <li>An error on one axis propagates to all axes in the same group</li>
+        <li>This is how a Z-axis error can stop X and Y — they share the same group</li>
+      </ul>
+
+      <div class="callout warn">
+        <span class="label">After error recovery</span>
+        <code>RST</code> clears the error but does <strong>not</strong> power the motor. Must explicitly call <code>PWR.0 = 1</code>. Check ML63 bit 36 before issuing any move. <strong>Re-home after error recovery</strong> — position may have been lost.
+      </div>
+    </section>
+
+    <!-- PID Control -->
+    <section id="pid" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">10. PID Control</h2>
+
+      <h3 class="text-lg font-semibold mt-4 mb-2">PID Registers</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Name</th><th class="p-2 text-left">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF1</code></td><td class="p-2">Proportional gain</td><td class="p-2">Immediate response to position error. Higher = faster but more ringing.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF2</code></td><td class="p-2">Integral gain</td><td class="p-2">Eliminates steady-state error. Too high = slow oscillation (integrator windup).</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF4</code></td><td class="p-2">Derivative gain</td><td class="p-2">Damping, reduces overshoot. Too high = noise amplification.</td></tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF5</code></td><td class="p-2">Anti-windup</td><td class="p-2">Prevents integrator saturation when output is capped.</td></tr>
+          <tr><td class="p-2"><code>KF61</code></td><td class="p-2">Force reference limit</td><td class="p-2">Caps PID output. Must be ≤ KF60.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Feedforward</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">Register</th><th class="p-2 text-left">Name</th><th class="p-2 text-left">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF3</code></td><td class="p-2">Speed feedforward</td><td class="p-2">Adds force proportional to target speed. Reduces tracking error during cruise phase.</td></tr>
+          <tr><td class="p-2"><code>KF6</code></td><td class="p-2">Acceleration feedforward</td><td class="p-2">Adds force proportional to target acceleration. Compensates for inertia during acc/dec.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="text-lg font-semibold mt-6 mb-2">Inside-Out Tuning</h3>
+      <p class="text-sm mb-3">COMET5 has two layers: <strong>Current loop → Position loop</strong> (no velocity loop — it's inside the drive firmware).</p>
+      <pre class="mermaid">
+graph LR
+    A["Step 1: Current Loop<br/>Identify → Fine-tune"] --> B["Step 2: Position Loop<br/>Identify → Fine-tune PID"]
+    B --> C["Step 3: Motion Tuning<br/>Feedforward KF3/KF6<br/>Settling window K38/KL39"]
+    style A fill:#3b82f6,color:#fff
+    style B fill:#6366f1,color:#fff
+    style C fill:#22c55e,color:#fff
+      </pre>
+
+      <div class="callout">
+        <span class="label">Why inside-out</span>
+        Each outer loop's plant IS the closed-loop transfer function of the inner loop. If the current loop is oscillating, the position loop identification will produce garbage data (steady high-pitch noise instead of clean broadband response). Tune current loop first, then position loop.
+      </div>
+    </section>
+
+    <!-- Quick Reference -->
+    <section id="quick-ref" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">11. Quick Reference — Corrected Register Lookup</h2>
+
+      <p class="text-sm mb-3 text-zinc-500">All entries verified against ACCURET+ Manual v1.0. <span class="text-green-600 dark:text-green-400">★</span> = previously incorrect, now corrected.</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-zinc-100 dark:bg-zinc-800">
+              <th class="p-2 text-left">Register</th><th class="p-2 text-left">Type</th><th class="p-2 text-left">Manual Name</th><th class="p-2 text-left">Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML0</code> <span class="text-green-600 dark:text-green-400">★</span></td><td class="p-2">long</td><td class="p-2">Position setpoint</td><td class="p-2">Reference position (not "raw encoder")</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML1</code> <span class="text-green-600 dark:text-green-400">★</span></td><td class="p-2">long</td><td class="p-2">Enhanced measured position</td><td class="p-2">Actual position (not "aux" or "setpoint")</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML2</code></td><td class="p-2">long</td><td class="p-2">Position tracking error</td><td class="p-2">ML0 − ML1</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML6</code></td><td class="p-2">long</td><td class="p-2">Adjusted reference position</td><td class="p-2">ML0 + ML4. What MVE moves to.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML7</code></td><td class="p-2">long</td><td class="p-2">Adjusted measured position</td><td class="p-2">ML1 + ML4. Used for stroke check.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>ML63</code></td><td class="p-2">long</td><td class="p-2">Controller status</td><td class="p-2">64-bit. Bit 19=error, 35=homed, 36=powered, 40=in-window.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>M64</code></td><td class="p-2">int</td><td class="p-2">Active errors</td><td class="p-2">8 subindexes. XXXYYY format.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>M66</code></td><td class="p-2">int</td><td class="p-2">Active warnings</td><td class="p-2">8 subindexes.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>M68</code></td><td class="p-2">int</td><td class="p-2">Active info messages</td><td class="p-2">Auto-clearing.</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K38</code> <span class="text-green-600 dark:text-green-400">★</span></td><td class="p-2">int</td><td class="p-2">POSWT</td><td class="p-2">Position window duration (not KL38)</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL39</code></td><td class="p-2">long</td><td class="p-2">POSW</td><td class="p-2">Position window half-range (±)</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K36</code> <span class="text-green-600 dark:text-green-400">★</span></td><td class="p-2">int</td><td class="p-2">MODESL</td><td class="p-2">SW stroke limit enable (not K35)</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K35</code></td><td class="p-2">int</td><td class="p-2">SLS mode</td><td class="p-2">SLS search mode (0–3)</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL34</code></td><td class="p-2">long</td><td class="p-2">MINSL</td><td class="p-2">Lower SW stroke limit</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL35</code></td><td class="p-2">long</td><td class="p-2">MAXSL</td><td class="p-2">Upper SW stroke limit</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K58</code></td><td class="p-2">int</td><td class="p-2">HW limit I/O type</td><td class="p-2">0=none, 1=FDIN/DIN, 2=enc L1/L2, 3=enc L/H</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K33</code></td><td class="p-2">int</td><td class="p-2">Limit switch enable</td><td class="p-2">0=disabled, 1=enabled</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL36</code></td><td class="p-2">long</td><td class="p-2">Pos limit FDIN mask</td><td class="p-2">Bitmask for positive limit switch</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KL37</code></td><td class="p-2">long</td><td class="p-2">Neg limit FDIN mask</td><td class="p-2">Bitmask for negative limit switch</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>M45</code></td><td class="p-2">int</td><td class="p-2">Limit+home status</td><td class="p-2">Bit 0=pos, 1=neg, 2=home</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF1</code></td><td class="p-2">float</td><td class="p-2">P gain</td><td class="p-2">Proportional gain</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF2</code></td><td class="p-2">float</td><td class="p-2">I gain</td><td class="p-2">Integral gain</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF4</code></td><td class="p-2">float</td><td class="p-2">D gain</td><td class="p-2">Derivative gain</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF5</code></td><td class="p-2">float</td><td class="p-2">Anti-windup</td><td class="p-2">Integrator anti-windup</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF3</code></td><td class="p-2">float</td><td class="p-2">Speed FF</td><td class="p-2">Speed feedforward</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF6</code></td><td class="p-2">float</td><td class="p-2">Accel FF</td><td class="p-2">Acceleration feedforward</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF60</code></td><td class="p-2">float</td><td class="p-2">Current ref limit</td><td class="p-2">Input to current controller</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF61</code></td><td class="p-2">float</td><td class="p-2">Force ref limit</td><td class="p-2">Caps PID output</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>KF83</code></td><td class="p-2">float</td><td class="p-2">Phase overcurrent</td><td class="p-2">Trips error 2'000</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K40</code></td><td class="p-2">int</td><td class="p-2">Homing mode</td><td class="p-2">0–1=end stop, 2–3=switch, 8–11=ref, 22=imm, 46=abs</td></tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-700"><td class="p-2"><code>K241</code></td><td class="p-2">int</td><td class="p-2">Motor type</td><td class="p-2">1=linear, 2=rotary</td></tr>
+            <tr><td class="p-2"><code>K600</code></td><td class="p-2">int</td><td class="p-2">Encoder type</td><td class="p-2">2=1Vpp, 4=TTL, 5=EnDat2.2, 16=EnDat3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Corrections Log -->
+    <section id="corrections" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Corrections Log</h2>
+
+      <p class="text-sm mb-4 text-zinc-500">All corrections verified against the ACCURET+ Operation and Software Manual v1.0 (03.12.25).</p>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="bg-zinc-100 dark:bg-zinc-800">
+            <th class="p-2 text-left">#</th><th class="p-2 text-left">File</th><th class="p-2 text-left">Was</th><th class="p-2 text-left">Corrected To</th><th class="p-2 text-left">Manual Ref</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2">1</td><td class="p-2">learning-guide</td><td class="p-2"><code>K34–K37</code> for SW stroke limits</td><td class="p-2"><code>KL34</code> (MINSL), <code>K35</code> (SLS mode), <code>KL35</code> (MAXSL), <code>K36</code> (MODESL)</td><td class="p-2">§8.10.2</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2">2</td><td class="p-2">learning-guide</td><td class="p-2"><code>ML1</code> for setpoint position</td><td class="p-2"><code>ML0</code> = Position setpoint</td><td class="p-2">§5.2</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2">3</td><td class="p-2">review-reference</td><td class="p-2"><code>K34–K37</code> for SW stroke limits</td><td class="p-2"><code>KL34, K35, KL35, K36</code></td><td class="p-2">§8.10.2</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2">4</td><td class="p-2">review-reference</td><td class="p-2"><code>ML1</code> as "Setpoint position"</td><td class="p-2"><code>ML0</code> = Position setpoint</td><td class="p-2">§5.2</td>
+          </tr>
+          <tr class="border-b border-zinc-200 dark:border-zinc-700">
+            <td class="p-2">5</td><td class="p-2">learning-notes-july1</td><td class="p-2"><code>KL38</code> for position window</td><td class="p-2"><code>K38</code> (POSWT) for time, <code>KL39</code> (POSW) for range</td><td class="p-2">§8.10.3</td>
+          </tr>
+          <tr>
+            <td class="p-2">6</td><td class="p-2">motion-commands</td><td class="p-2"><code>ML0</code>="Raw Position", <code>ML1</code>="Raw Position (aux)"</td><td class="p-2"><code>ML0</code>=Position setpoint, <code>ML1</code>=Enhanced measured position</td><td class="p-2">§5.2</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-sm text-zinc-500">
+      <p>Generated by the <code>html-report</code> skill. Source: ETEL ACCURET+ Operation and Software Manual, Ver. 1.0 (03.12.25). All register references verified against the manual.</p>
+      <p class="mt-2">Communication: TCP/IP + USB. For PCB drilling machine application — Suzhou Weijia Technology.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    localStorage.theme = dark ? 'dark' : 'light';
+    if (window.__mermaid) {
+      document.querySelectorAll('.mermaid[data-processed]').forEach(el => {
+        el.removeAttribute('data-processed');
+        el.innerHTML = el.dataset.src || el.textContent;
+      });
+      window.__mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' });
+      window.__mermaid.run();
+    }
+  });
+
+  hljs.highlightAll();
+  document.querySelectorAll('pre > code').forEach(code => {
+    const pre = code.parentElement;
+    pre.classList.add('has-copy');
+    const btn = document.createElement('button');
+    btn.textContent = 'copy';
+    btn.className = 'copy-btn no-print text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-100 hover:bg-zinc-600';
+    btn.style.opacity = '0.5';
+    btn.addEventListener('mouseenter', () => btn.style.opacity = '1');
+    btn.addEventListener('mouseleave', () => btn.style.opacity = '0.5');
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(code.innerText);
+      const old = btn.textContent;
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = old, 1200);
+    });
+    pre.appendChild(btn);
+  });
+
+  const tocLinks = document.querySelectorAll('.toc a');
+  const sections = [...tocLinks].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if (sections.length) {
+    const onScroll = () => {
+      const y = window.scrollY + 100;
+      let active = sections[0];
+      for (const s of sections) if (s.offsetTop <= y) active = s;
+      tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active.id));
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>
+</body>
+</html>

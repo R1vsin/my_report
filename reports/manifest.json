@@ -1,5 +1,11 @@
 [
   {
+    "file": "2026-07-02-accurat-reference-guide.html",
+    "title": "ACCURET+ Reference Guide \u2014 Verified against Manual v1.0",
+    "date": "2026-07-02",
+    "description": "Comprehensive ACCURET+ controller reference with all corrections applied"
+  },
+  {
     "file": "2026-07-02-combined-ch1-cnc-hardware-models.html",
     "title": "Ch1 Combined: CNC Hardware & Mathematical Models",
     "date": "2026-07-02",
