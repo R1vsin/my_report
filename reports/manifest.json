@@ -1,0 +1,14 @@
+[
+  {
+    "file": "2026-06-16-auto-research-brief.html",
+    "title": "Auto Research: a short field guide",
+    "date": "2026-06-16",
+    "description": "A concise interactive report on auto research agents: loop, fit, risks, evaluation, and rollout pattern."
+  },
+  {
+    "file": "2026-05-10-example-showcase.html",
+    "title": "Example: what an html-report looks like",
+    "date": "2026-05-10",
+    "description": "Demo of every interactive feature the skill encourages \u2014 charts, sortable tables, tabs, code, diagrams, math, dark mode."
+  }
+]

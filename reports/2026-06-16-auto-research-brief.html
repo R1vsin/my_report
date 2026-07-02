@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Auto Research: a short field guide</title>
+  <meta name="description" content="A concise interactive report on auto research agents: loop, use cases, risks, evaluation, and rollout pattern.">
+  <meta property="og:title" content="Auto Research: a short field guide">
+  <meta property="og:description" content="A concise interactive report on auto research agents: loop, use cases, risks, evaluation, and rollout pattern.">
+  <meta property="og:type" content="article">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+
+  <link id="hljs-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    const isDark = document.documentElement.classList.contains('dark');
+    mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' });
+    window.__mermaid = mermaid;
+  </script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    onload='renderMathInElement(document.body, { delimiters: [
+      {left:"$$",right:"$$",display:true},
+      {left:"$",right:"$",display:false}
+    ]})'></script>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+    @media print { .no-print { display: none !important; } body { color: #000; background: #fff; } a { color: inherit; text-decoration: underline; } }
+    pre code.hljs { border-radius: .5rem; padding: 1rem; font-size: .85rem; }
+    details > summary { cursor: pointer; user-select: none; padding: .5rem 0; }
+    details > summary::marker { content: "▸ "; }
+    details[open] > summary::marker { content: "▾ "; }
+    details { border-top: 1px solid; border-color: rgb(228 228 231); padding-bottom: .5rem; }
+    .dark details { border-color: rgb(39 39 42); }
+    .toc a { display: block; padding: .2rem 0; opacity: .6; transition: opacity .15s; }
+    .toc a:hover, .toc a.active { opacity: 1; }
+    .toc a.active { font-weight: 500; }
+    .copy-btn { position: absolute; top: .5rem; right: .5rem; }
+    pre.has-copy { position: relative; }
+    .tabs > input[type="radio"] { display: none; }
+    .tabs > label { cursor: pointer; padding: .5rem 1rem; border-bottom: 2px solid transparent; display: inline-block; }
+    .tabs > input:checked + label { border-color: currentColor; font-weight: 500; }
+    .tabs > .tab-panel { display: none; padding-top: 1rem; }
+    .tabs > input:nth-of-type(1):checked ~ .tab-panel:nth-of-type(1),
+    .tabs > input:nth-of-type(2):checked ~ .tab-panel:nth-of-type(2),
+    .tabs > input:nth-of-type(3):checked ~ .tab-panel:nth-of-type(3) { display: block; }
+    .stat-card { padding: 1.5rem; border-radius: .75rem; border: 1px solid rgb(228 228 231); }
+    .dark .stat-card { border-color: rgb(39 39 42); }
+    .source-chip { border-bottom: 1px dotted currentColor; }
+  </style>
+</head>
+
+<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
+
+<div class="fixed top-4 right-4 z-50 flex gap-2 no-print">
+  <button id="theme-toggle" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/70 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">☼ / ☾</button>
+  <button onclick="window.print()" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/70 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">print</button>
+</div>
+
+<div class="max-w-6xl mx-auto px-6 py-12 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-12">
+
+  <nav class="toc lg:sticky lg:top-12 self-start text-sm mb-8 lg:mb-0 no-print">
+    <div class="font-semibold mb-2 text-zinc-500 uppercase tracking-wider text-xs">Contents</div>
+    <a href="#takeaway">Takeaway</a>
+    <a href="#loop">Research loop</a>
+    <a href="#fit">Where it fits</a>
+    <a href="#chart">Effort shift</a>
+    <a href="#table">Capability matrix</a>
+    <a href="#playbook">Playbook</a>
+    <a href="#risks">Risks</a>
+    <a href="#sources">Sources</a>
+  </nav>
+
+  <main class="min-w-0">
+
+    <header class="mb-12">
+      <p class="text-sm text-zinc-500 mb-2">BRIEF • <time>2026-06-16</time></p>
+      <h1 class="text-4xl font-bold tracking-tight mb-3">Auto Research: a short field guide</h1>
+      <p class="text-lg text-zinc-600 dark:text-zinc-400">Auto research is not "AI search with a longer answer." The useful version is an agentic loop: plan, search, read, cross-check, synthesize, cite, and revise until the open questions are closed enough to support a decision.</p>
+    </header>
+
+    <section id="takeaway" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Takeaway</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="stat-card">
+          <div class="text-sm text-zinc-500">Best use</div>
+          <div class="text-2xl font-bold mt-1">scoping</div>
+          <div class="text-xs text-zinc-500 mt-2">landscape scans, vendor maps, literature triage</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-sm text-zinc-500">Human role</div>
+          <div class="text-2xl font-bold mt-1">editor</div>
+          <div class="text-xs text-zinc-500 mt-2">set question, audit sources, decide action</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-sm text-zinc-500">Failure mode</div>
+          <div class="text-2xl font-bold mt-1">false closure</div>
+          <div class="text-xs text-zinc-500 mt-2">pretty synthesis before evidence is strong</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="loop" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">The research loop</h2>
+      <p class="mb-4 text-zinc-600 dark:text-zinc-400">The pattern is shared across modern "deep research" products: decompose the question, explore sources, build on earlier searches, then produce a cited report. OpenAI describes browsing, file analysis, graph iteration, and citation as part of deep research; Claude Research emphasizes successive searches and citations; Gemini Deep Research frames the agent as planning, executing, and synthesizing multi-step research tasks.</p>
+      <div class="stat-card"><pre class="mermaid">
+flowchart LR
+  Q[Question] --> P[Plan]
+  P --> S[Search]
+  S --> R[Read sources]
+  R --> C[Cross-check]
+  C --> G[Generate draft]
+  G --> A[Audit gaps]
+  A -->|missing evidence| S
+  A -->|good enough| O[Cited report]
+      </pre></div>
+    </section>
+
+    <section id="fit" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Where it fits</h2>
+      <div class="tabs border-b border-zinc-200 dark:border-zinc-800">
+        <input type="radio" id="tab1" name="fit-tabs" checked><label for="tab1">Great fit</label>
+        <input type="radio" id="tab2" name="fit-tabs"><label for="tab2">Use with caution</label>
+        <input type="radio" id="tab3" name="fit-tabs"><label for="tab3">Poor fit</label>
+
+        <div class="tab-panel">
+          <p>Market scans, paper triage, competitive landscaping, policy summaries, first-pass due diligence, and "what changed since last quarter?" briefs.</p>
+        </div>
+        <div class="tab-panel">
+          <p>Medical, legal, financial, and security-critical research. Use the agent to collect and organize evidence; keep judgment and liability with a qualified human.</p>
+        </div>
+        <div class="tab-panel">
+          <p>Tasks that require privileged facts the agent cannot access, adversarial source evaluation, or final decisions where one missed citation changes the outcome.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="chart" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Effort shifts from gathering to judging</h2>
+      <p class="mb-4 text-zinc-600 dark:text-zinc-400">The value is not removing the human; it changes where the human spends attention.</p>
+      <div class="h-72 stat-card"><canvas id="effort-chart"></canvas></div>
+    </section>
+
+    <section id="table" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Capability matrix</h2>
+      <input id="tbl-filter" placeholder="Filter rows..."
+        class="w-full mb-3 px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <div class="overflow-x-auto stat-card !p-0">
+        <table id="tbl" class="w-full text-sm">
+          <thead class="bg-zinc-50 dark:bg-zinc-900 text-left">
+            <tr>
+              <th class="px-4 py-2 cursor-pointer select-none" data-sort="0">Capability ↕</th>
+              <th class="px-4 py-2 cursor-pointer select-none" data-sort="1">Why it matters ↕</th>
+              <th class="px-4 py-2 cursor-pointer select-none" data-sort="2">Human check ↕</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tr><td class="px-4 py-2">Query planning</td><td class="px-4 py-2">Prevents one-shot search from missing angles.</td><td class="px-4 py-2">Approve scope and exclusions.</td></tr>
+            <tr><td class="px-4 py-2">Source retrieval</td><td class="px-4 py-2">Finds current public and connected private context.</td><td class="px-4 py-2">Check source quality and access boundaries.</td></tr>
+            <tr><td class="px-4 py-2">Cross-source synthesis</td><td class="px-4 py-2">Turns scattered notes into a decision narrative.</td><td class="px-4 py-2">Look for contradiction and omitted evidence.</td></tr>
+            <tr><td class="px-4 py-2">Citation trail</td><td class="px-4 py-2">Makes claims inspectable instead of magical.</td><td class="px-4 py-2">Open sampled citations, especially surprising claims.</td></tr>
+            <tr><td class="px-4 py-2">Artifact generation</td><td class="px-4 py-2">Converts research into report, table, chart, or memo.</td><td class="px-4 py-2">Decide audience, level, and action.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-zinc-500 mt-2">Click headers to sort. Type above to filter.</p>
+    </section>
+
+    <section id="playbook" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">A practical prompt pattern</h2>
+      <p class="mb-4 text-zinc-600 dark:text-zinc-400">The cleanest prompts ask the agent to plan first, expose uncertainty, and separate evidence from recommendation.</p>
+<pre><code class="language-text">Research: Should we adopt technique X for product Y?
+
+First produce a research plan with:
+- subquestions
+- source types to check
+- stopping criteria
+
+Then execute the plan and return:
+- answer-first summary
+- evidence table with citations
+- contradictions and gaps
+- recommendation with confidence level
+</code></pre>
+      <p class="mt-4">A simple scoring model for whether to trust the result:</p>
+      <p class="text-center text-lg">$$Trust = f(source\ quality, coverage, contradiction\ handling, citation\ audit)$$</p>
+    </section>
+
+    <section id="risks" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Risks to design around</h2>
+      <details>
+        <summary class="font-medium">Source laundering</summary>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400">A cited report can still overstate weak sources. Require source tiering: primary, reputable secondary, commentary, unknown.</p>
+      </details>
+      <details>
+        <summary class="font-medium">Coverage illusion</summary>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400">A multi-page answer can look complete while missing the key database, paper, regulation, or internal document.</p>
+      </details>
+      <details>
+        <summary class="font-medium">Decision drift</summary>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400">Agents optimize for a polished synthesis unless the prompt asks for "what would change my mind?" and "what is still unknown?"</p>
+      </details>
+    </section>
+
+    <section id="sources" class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Sources checked</h2>
+      <ul class="space-y-3 text-sm">
+        <li><a class="underline source-chip" href="https://openai.com/index/introducing-deep-research/">OpenAI: Introducing deep research</a> - describes multi-step browsing, file analysis, graph iteration, and citations.</li>
+        <li><a class="underline source-chip" href="https://support.claude.com/en/articles/11088861-use-research-on-claude">Claude Help Center: Use research on Claude</a> - frames research as agentic successive searches with citations.</li>
+        <li><a class="underline source-chip" href="https://ai.google.dev/gemini-api/docs/interactions/deep-research">Google AI for Developers: Gemini Deep Research Agent</a> - describes planning, execution, synthesis, MCP tools, and visualizations.</li>
+        <li><a class="underline source-chip" href="https://gemini.google/overview/deep-research/">Gemini Deep Research overview</a> - describes breaking down complex tasks, exploring web and Workspace sources, and synthesizing findings.</li>
+      </ul>
+    </section>
+
+    <footer class="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-sm text-zinc-500">
+      Generated by the <code>html-report</code> skill - <a class="underline hover:text-zinc-900 dark:hover:text-zinc-100" href="../">all reports</a>.
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    localStorage.theme = dark ? 'dark' : 'light';
+    if (window.__mermaid) {
+      document.querySelectorAll('.mermaid[data-processed]').forEach(el => { el.removeAttribute('data-processed'); el.innerHTML = el.dataset.src || el.textContent; });
+      window.__mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' });
+      window.__mermaid.run();
+    }
+    if (window.effortChart) {
+      const grid = dark ? '#27272a' : '#e4e4e7';
+      effortChart.options.scales.x.grid.color = grid;
+      effortChart.options.scales.y.grid.color = grid;
+      effortChart.update();
+    }
+  });
+
+  hljs.highlightAll();
+  document.querySelectorAll('pre > code').forEach(code => {
+    const pre = code.parentElement;
+    pre.classList.add('has-copy');
+    const btn = document.createElement('button');
+    btn.textContent = 'copy';
+    btn.className = 'copy-btn no-print text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-100';
+    btn.style.opacity = '0.6';
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(code.innerText);
+      btn.textContent = 'copied'; setTimeout(() => btn.textContent = 'copy', 1200);
+    });
+    pre.appendChild(btn);
+  });
+
+  const tocLinks = document.querySelectorAll('.toc a');
+  const sections = [...tocLinks].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const onScroll = () => {
+    const y = window.scrollY + 100;
+    let active = sections[0];
+    for (const s of sections) if (s.offsetTop <= y) active = s;
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active.id));
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  const dark = document.documentElement.classList.contains('dark');
+  const grid = dark ? '#27272a' : '#e4e4e7';
+  window.effortChart = new Chart(document.getElementById('effort-chart'), {
+    type: 'bar',
+    data: {
+      labels: ['Manual research', 'Auto research + audit'],
+      datasets: [
+        { label: 'Gathering', data: [45, 14], backgroundColor: '#3b82f6' },
+        { label: 'Synthesis', data: [25, 22], backgroundColor: '#10b981' },
+        { label: 'Judgment / audit', data: [20, 38], backgroundColor: '#f59e0b' },
+        { label: 'Packaging', data: [10, 16], backgroundColor: '#a855f7' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        x: { stacked: true, grid: { color: grid } },
+        y: { stacked: true, beginAtZero: true, max: 100, grid: { color: grid }, title: { display: true, text: 'relative effort (%)' } }
+      }
+    }
+  });
+
+  const tbl = document.getElementById('tbl');
+  const tbody = tbl.tBodies[0];
+  document.querySelectorAll('#tbl thead th').forEach(th => {
+    let asc = true;
+    th.addEventListener('click', () => {
+      const idx = +th.dataset.sort;
+      const rows = [...tbody.rows];
+      rows.sort((a, b) => a.cells[idx].textContent.trim().localeCompare(b.cells[idx].textContent.trim()) * (asc ? 1 : -1));
+      asc = !asc;
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+  document.getElementById('tbl-filter').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    [...tbody.rows].forEach(r => {
+      r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+</script>
+
+</body>
+</html>
