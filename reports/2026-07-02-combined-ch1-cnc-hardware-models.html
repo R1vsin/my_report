@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ch1 Combined: CNC Hardware & Mathematical Models</title>
+  <meta name="description" content="CNC Book Ch1 + Nise Ch2 §2.8 combined study notes — servo motors, encoders, transfer functions, control loops, and NCK pipeline for ETEL ACCURET+ PCB drilling.">
+  <meta property="og:title" content="Ch1 Combined: CNC Hardware & Mathematical Models">
+  <meta property="og:description" content="CNC Book Ch1 + Nise Ch2 §2.8 — servo motors, encoders, transfer functions, NCK pipeline.">
+  <meta property="og:type" content="article">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['system-ui','ui-sans-serif','sans-serif'] } } } };
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+
+  <link id="hljs-theme" rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    const isDark = document.documentElement.classList.contains('dark');
+    mermaid.initialize({ startOnLoad: true, theme: isDark ? 'dark' : 'default', securityLevel: 'loose' });
+    window.__mermaid = mermaid;
+  </script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    onload='renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}]})'></script>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+    @media print {
+      .no-print { display: none !important; }
+      body { color:#000; background:#fff; }
+      details { display:block; } details > summary { display:none; }
+    }
+    pre code.hljs { border-radius:.5rem; padding:1rem; font-size:.85rem; }
+    details > summary { cursor:pointer; user-select:none; }
+    details > summary::marker { content:"▸ "; }
+    details[open] > summary::marker { content:"▾ "; }
+    .toc a { display:block; padding:.25rem 0; opacity:.55; transition:opacity .15s; font-size:.8rem; }
+    .toc a:hover,.toc a.active { opacity:1; }
+    .toc a.active { font-weight:600; }
+    .copy-btn { position:absolute; top:.5rem; right:.5rem; }
+    pre.has-copy { position:relative; }
+
+    .badge-cnc  { background:#14532d22; color:#4ade80; border:1px solid #4ade8055; }
+    .badge-nise { background:#3b0764aa; color:#c084fc; border:1px solid #c084fc55; }
+    .badge-you  { background:#1e3a5f55; color:#60a5fa; border:1px solid #60a5fa55; }
+
+    .callout { border-radius:.5rem; padding:1rem 1.25rem; margin:1.25rem 0; }
+    .callout-label { font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.5rem; }
+    .cnc-block  { border-left:4px solid #4ade80; background:rgba(74,222,128,.07); }
+    .cnc-block .callout-label  { color:#4ade80; }
+    .nise-block { border-left:4px solid #c084fc; background:rgba(192,132,252,.07); }
+    .nise-block .callout-label { color:#c084fc; }
+    .you-block  { border-left:4px solid #60a5fa; background:rgba(96,165,250,.07); }
+    .you-block .callout-label  { color:#60a5fa; }
+    .key-block  { border-left:4px solid #fb923c; background:rgba(251,146,60,.07); }
+    .key-block .callout-label  { color:#fb923c; }
+    .read-block { border-left:4px solid #94a3b8; background:rgba(148,163,184,.06); }
+    .read-block .callout-label { color:#94a3b8; }
+
+    .tabs > input[type="radio"] { display:none; }
+    .tabs > label { cursor:pointer; padding:.45rem 1rem; border-bottom:2px solid transparent; font-size:.875rem; display:inline-block; }
+    .tabs > input:checked + label { border-color:#60a5fa; color:#60a5fa; font-weight:600; }
+    .tabs > .tab-panel { display:none; padding-top:1rem; }
+    .tabs > input:nth-of-type(1):checked ~ .tab-panel:nth-of-type(1),
+    .tabs > input:nth-of-type(2):checked ~ .tab-panel:nth-of-type(2),
+    .tabs > input:nth-of-type(3):checked ~ .tab-panel:nth-of-type(3) { display:block; }
+
+    .formula-block { background:rgba(96,165,250,.08); border:1px solid rgba(96,165,250,.2); border-radius:.5rem; padding:1rem 1.25rem; margin:.75rem 0; overflow-x:auto; }
+  </style>
+</head>
+
+<body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
+
+<div class="fixed top-4 right-4 z-50 flex gap-2 no-print">
+  <button id="theme-toggle" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">☼ / ☾</button>
+  <button onclick="window.print()" class="px-3 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 backdrop-blur text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">print</button>
+</div>
+
+<div class="max-w-6xl mx-auto px-6 py-12 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-14">
+
+  <nav class="toc lg:sticky lg:top-12 self-start mb-10 lg:mb-0 no-print">
+    <div class="font-semibold mb-3 text-zinc-400 uppercase tracking-widest text-xs">Contents</div>
+    <a href="#overview">Overview</a>
+    <a href="#nc-machine">1.1 What is NC?</a>
+    <a href="#servo-chain">1.2 Servo Chain</a>
+    <a href="#motor-types">1.3 Motor Types</a>
+    <a href="#dc-motor-tf">↳ DC Motor Transfer Fn</a>
+    <a href="#encoders">1.4 Encoders</a>
+    <a href="#ball-screw">1.5 Ball Screw</a>
+    <a href="#loop-configs">1.6 Loop Configs</a>
+    <a href="#nck-pipeline">1.7 NCK Pipeline</a>
+    <a href="#summary-table">Summary Table</a>
+    <div class="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+      <div class="text-xs text-zinc-400 mb-2 uppercase tracking-wider">Legend</div>
+      <div class="flex flex-col gap-1 text-xs">
+        <span class="badge-cnc px-2 py-0.5 rounded">📗 CNC Book</span>
+        <span class="badge-nise px-2 py-0.5 rounded mt-1">📘 Nise Theory</span>
+        <span class="badge-you px-2 py-0.5 rounded mt-1">🔧 Your Machine</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="min-w-0">
+    <header class="mb-12" id="overview">
+      <p class="text-xs text-zinc-400 uppercase tracking-widest mb-2">Study Notes · 2026-07-02</p>
+      <h1 class="text-3xl font-bold tracking-tight mb-2">Chapter 1 — Combined</h1>
+      <h2 class="text-xl text-zinc-500 dark:text-zinc-400 font-normal mb-4">CNC Hardware &amp; Mathematical Models</h2>
+      <div class="flex flex-wrap gap-2 mb-5">
+        <span class="badge-cnc text-xs px-2.5 py-1 rounded-full">📗 CNC Book Ch1 — Primary</span>
+        <span class="badge-nise text-xs px-2.5 py-1 rounded-full">📘 Nise Ch2 §2.8 — Theory</span>
+        <span class="badge-you text-xs px-2.5 py-1 rounded-full">🔧 ETEL ACCURET+ Context</span>
+      </div>
+      <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">CNC Book Ch1 is the primary structure. Nise Ch2 §2.8 (DC motor transfer function) is injected where the math behind the hardware becomes relevant. ACCURET+ callouts connect theory to your actual machine.</p>
+    </header>
+
+    <!-- 1.1 -->
+    <section id="nc-machine" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.1 What is an NC Machine?</h2>
+      <div class="callout cnc-block">
+        <div class="callout-label">📗 CNC Book — Main Text</div>
+        <p>NC machines are <strong>mechatronics products</strong> — mechanical systems combined with numerical control electronics. Your PCB drilling machine is a non-cutting NC machine (press/drilling/forming category, distinct from milling/turning).</p>
+        <p class="mt-3 font-semibold">Production pipeline:</p>
+        <div class="mt-3 overflow-x-auto">
+          <pre class="mermaid">flowchart LR
+  A[CAD\nGeometry] --> B[CAPP\nProcess Plan] --> C[CAM\nTool Path] --> D[Part Program\nSequence / G-code] --> E[NCK\nACCURET+] --> F[Machine\nMoves]
+  style E fill:#1e3a5f,stroke:#60a5fa,color:#fff
+  style D fill:#14532d,stroke:#4ade80,color:#fff</pre>
+        </div>
+        <ul class="mt-3 space-y-1 text-sm">
+          <li><strong>CAD:</strong> Geometry — hole positions, board outline</li>
+          <li><strong>CAPP:</strong> Process plan — drill sizes, sequence, speeds</li>
+          <li><strong>CAM:</strong> Tool path — exact trajectory each drill follows</li>
+          <li><strong>Part Program:</strong> What you write in COMET Sequence compiler</li>
+        </ul>
+      </div>
+      <div class="callout you-block">
+        <div class="callout-label">🔧 Your Machine (ACCURET+)</div>
+        When you write <code class="bg-zinc-800 text-blue-300 px-1 rounded text-sm">MVE X100 Y200</code> in a Sequence program, you are writing the Part Program. ACCURET+ is the NCK that executes it. COMET is the MMI above it.
+      </div>
+    </section>
+
+    <!-- 1.2 -->
+    <section id="servo-chain" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.2 Servo Driving Mechanism</h2>
+      <div class="callout cnc-block">
+        <div class="callout-label">📗 CNC Book — Main Text</div>
+        <p class="mb-3">The complete motion chain:</p>
+        <div class="overflow-x-auto">
+          <pre class="mermaid">flowchart LR
+  A[NC Command] --> B[Servo Motor] --> C[Ball Screw\nRotation→Linear] --> D[Table Moves]
+  B -. encoder feedback .-> A
+  style A fill:#374151,stroke:#9ca3af,color:#fff
+  style D fill:#14532d,stroke:#4ade80,color:#fff</pre>
+        </div>
+        <p class="mt-3 font-semibold">Three key subsystems:</p>
+        <ol class="mt-2 space-y-1 list-decimal list-inside text-sm">
+          <li><strong>Driving motor + encoder</strong> (servo motor)</li>
+          <li><strong>Linear movement guide</strong> (ball screw + LM guides)</li>
+          <li><strong>Coupling</strong> (motor shaft to ball screw)</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 1.3 -->
+    <section id="motor-types" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.3 Servo Motor Types</h2>
+
+      <div class="tabs border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 mb-6">
+        <input type="radio" name="motor-tab" id="mt1" checked>
+        <label for="mt1">DC Servo</label>
+        <input type="radio" name="motor-tab" id="mt2">
+        <label for="mt2">PMSM (AC Sync)</label>
+        <input type="radio" name="motor-tab" id="mt3">
+        <label for="mt3">Induction AC</label>
+
+        <div class="tab-panel">
+          <div class="callout cnc-block">
+            <div class="callout-label">📗 DC Servo</div>
+            <p><strong>Principle:</strong> Brush + commutator. Current through armature creates torque.</p>
+            <p class="mt-2 text-green-400">✅ Pros: Simple control, well-understood math model</p>
+            <p class="text-red-400">❌ Cons: Brush wear, maintenance overhead, being phased out</p>
+            <p class="mt-2"><strong>CNC Use:</strong> Older machines only</p>
+          </div>
+        </div>
+
+        <div class="tab-panel">
+          <div class="callout cnc-block">
+            <div class="callout-label">📗 PMSM — Standard CNC Servo</div>
+            <p><strong>Principle:</strong> Permanent magnet rotor, 3-phase stator. Electronic commutation via FOC (Field-Oriented Control).</p>
+            <p class="mt-2 text-sm">FOC uses <strong>Clarke transform</strong> (UVW → αβ) then <strong>Park transform</strong> (αβ → dq) to decouple torque and flux — making PMSM behave like a DC motor in the dq-frame.</p>
+            <p class="mt-2 text-green-400">✅ Pros: No brushes, high torque at zero speed, precise, high power density</p>
+            <p class="text-amber-400">⚠️ Cons: Complex control electronics (FOC)</p>
+            <p class="mt-2"><strong>CNC Use:</strong> <span class="text-green-400 font-semibold">Standard for CNC servo axes — ETEL uses this</span></p>
+          </div>
+          <div class="callout you-block">
+            <div class="callout-label">🔧 Your Machine</div>
+            Your ETEL linear motors on X/Y/Z are PMSM-type controlled by FOC inside the ETEL drive firmware. COMET never exposes the FOC internals — they are factory-tuned inside the drive.
+          </div>
+        </div>
+
+        <div class="tab-panel">
+          <div class="callout cnc-block">
+            <div class="callout-label">📗 Induction AC</div>
+            <p><strong>Principle:</strong> Squirrel cage rotor, induced current. No permanent magnets.</p>
+            <p class="mt-2 text-green-400">✅ Pros: Rugged, very high speed, low cost</p>
+            <p class="text-red-400">❌ Cons: Less precise position control, speed-dependent torque</p>
+            <p class="mt-2"><strong>CNC Use:</strong> Spindle motors (high-speed rotation, not position-critical)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DC Motor TF -->
+      <div id="dc-motor-tf">
+        <h3 class="text-lg font-semibold mb-3 text-purple-400">📘 Nise Theory — DC Motor Transfer Function (Nise Ch2 §2.8)</h3>
+        <div class="callout nise-block">
+          <div class="callout-label">📘 Nise Theory Background</div>
+          <p>Because FOC transforms PMSM control into the dq-frame (behaves like DC motor), the DC motor transfer function gives you the math model for any servo motor in your machine.</p>
+
+          <p class="mt-3 font-semibold">Two coupled physical domains:</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div class="bg-zinc-800/50 rounded-lg p-3">
+              <p class="text-purple-300 font-semibold text-sm mb-2">⚡ Electrical Domain</p>
+              <ul class="text-sm space-y-1">
+                <li>Armature resistance: $R_a$</li>
+                <li>Armature inductance: $L_a$</li>
+                <li>Back-EMF: $v_b = K_b \cdot \dot{\theta}$</li>
+              </ul>
+            </div>
+            <div class="bg-zinc-800/50 rounded-lg p-3">
+              <p class="text-blue-300 font-semibold text-sm mb-2">⚙️ Mechanical Domain</p>
+              <ul class="text-sm space-y-1">
+                <li>Rotor inertia: $J$</li>
+                <li>Viscous damping: $D$</li>
+                <li>Motor torque: $T_m = K_t \cdot i_a$</li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="mt-4 font-semibold">Full transfer function (voltage → shaft angle):</p>
+          <div class="formula-block text-center">
+            $$\frac{\theta(s)}{E_a(s)} = \frac{K_t}{s \left[ (R_a + L_a s)(Js + D) + K_t K_b \right]}$$
+          </div>
+
+          <p class="mt-3 font-semibold">Simplified (with $L_a \approx 0$, since $\tau_e \ll \tau_m$):</p>
+          <div class="formula-block text-center">
+            $$\frac{\theta(s)}{E_a(s)} = \frac{K_t}{s \left( R_a J s + R_a D + K_t K_b \right)}$$
+          </div>
+          <p class="text-sm text-zinc-400 mt-1">Second-order system — two poles, one integrator ($\frac{1}{s}$).</p>
+
+          <p class="mt-4 font-semibold">Velocity form (what encoder measures):</p>
+          <div class="formula-block text-center">
+            $$\frac{\Omega(s)}{E_a(s)} = \frac{K_t}{R_a J s + R_a D + K_t K_b} \qquad \tau = \frac{R_a J}{R_a D + K_t K_b}$$
+          </div>
+          <p class="text-sm text-zinc-400 mt-1">First-order system. Time constant $\tau$ = how fast motor velocity responds to voltage.</p>
+        </div>
+
+        <div class="callout key-block">
+          <div class="callout-label">💡 Key Link — Why This Matters for COMET Tuning</div>
+          When COMET runs system identification (auto-tune), it identifies $J$, $D$, $K_t$ by exciting the motor and fitting this transfer function to the measured response. Then it computes PID gains that place the closed-loop poles where you want them. <strong>This is the mathematical foundation of the whole COMET tuning process.</strong>
+        </div>
+
+        <details class="border border-zinc-200 dark:border-zinc-800 rounded-lg mt-4">
+          <summary class="px-4 py-3 font-medium text-sm text-zinc-500">📖 Read the Book — Nise Ch2 §2.8 (pp. 124–132)</summary>
+          <div class="px-4 pb-4 text-sm text-zinc-500 mt-2">
+            Follow the two mesh equations: electrical ($v_a = R_a i_a + L_a \dot{i}_a + v_b$) and mechanical ($T_m = J\ddot{\theta} + D\dot{\theta}$). Take Laplace of both, substitute $T_m(s) = K_t I_a(s)$ and $V_b(s) = K_b s\Theta(s)$, eliminate $I_a(s)$, simplify to final form. Worth doing once by hand.
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 1.4 -->
+    <section id="encoders" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.4 Encoder Types</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="border-b-2 border-zinc-300 dark:border-zinc-700">
+              <th class="text-left py-3 px-4 font-semibold">Type</th>
+              <th class="text-left py-3 px-4 font-semibold">Output</th>
+              <th class="text-left py-3 px-4 font-semibold">Position at Power-On</th>
+              <th class="text-left py-3 px-4 font-semibold">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Incremental</td>
+              <td class="py-3 px-4">A/B quadrature pulses, counts from zero</td>
+              <td class="py-3 px-4 text-amber-500">Unknown — needs homing</td>
+              <td class="py-3 px-4 text-zinc-500">Cheaper. Common in older machines.</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium text-green-400">Absolute</td>
+              <td class="py-3 px-4">Binary position code (e.g. 20-bit EnDat)</td>
+              <td class="py-3 px-4 text-green-400">Known immediately</td>
+              <td class="py-3 px-4"><span class="text-green-400 font-medium">ETEL uses this.</span> No homing needed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout you-block mt-4">
+        <div class="callout-label">🔧 Your Machine (ACCURET+)</div>
+        <p>ETEL motors use <strong>absolute encoders (EnDat protocol)</strong> — position is known at power-on, no homing needed.</p>
+        <p class="mt-2"><strong>Resolution:</strong></p>
+        <div class="formula-block text-sm mt-2">
+          $$\text{Theoretical step} = \frac{5\text{ mm}}{10{,}000\text{ pulses/rev}} = 0.5\text{ μm/pulse}$$
+        </div>
+        <p class="text-sm text-zinc-400 mt-1">Real-world accuracy ±25 μm due to ball screw pitch errors and thermal expansion — the encoder is more precise than the mechanical system.</p>
+      </div>
+    </section>
+
+    <!-- 1.5 -->
+    <section id="ball-screw" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.5 Ball Screw and Coupling</h2>
+      <div class="callout cnc-block">
+        <div class="callout-label">📗 CNC Book — Main Text</div>
+        <p><strong>Ball screw:</strong> Converts rotation to linear motion. Lead = mm/revolution. Pre-loaded to eliminate backlash. Resolution = lead / pulses-per-rev.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <div class="bg-zinc-800/40 rounded-lg p-3 text-sm">
+            <p class="font-semibold text-zinc-200 mb-1">Rigid Coupling</p>
+            <p class="text-zinc-400">Accurate, no compliance. Transmits shock to motor bearings.</p>
+          </div>
+          <div class="bg-zinc-800/40 rounded-lg p-3 text-sm">
+            <p class="font-semibold text-amber-300 mb-1">Flexible Coupling ⚠️</p>
+            <p class="text-zinc-400">Absorbs vibration. Adds compliance — a spring in the system. Can cause ringing.</p>
+          </div>
+          <div class="bg-zinc-800/40 rounded-lg p-3 text-sm">
+            <p class="font-semibold text-green-300 mb-1">Direct Drive</p>
+            <p class="text-zinc-400">Linear motor, no screw. Highest precision. Most expensive.</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout nise-block">
+        <div class="callout-label">📘 Nise Theory — Compliance Adds a Pole</div>
+        <p>A flexible coupling adds spring $K$ and damper $D$ between motor and load — creating an additional resonant mode:</p>
+        <div class="formula-block text-center mt-3">
+          $$G_{plant}(s) = G_{motor}(s) \cdot \underbrace{\frac{1}{Ms^2 + Ds + K}}_{G_{coupling}} \cdot G_{load}(s)$$
+        </div>
+        <p class="text-sm mt-2">Where $G_{coupling}$ is a mass-spring-damper (Nise Ch2 §2.5). High $K_p$ excites this resonance → "ringing" in COMET's position error graph.</p>
+      </div>
+    </section>
+
+    <!-- 1.6 -->
+    <section id="loop-configs" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.6 CNC Control Loop Configurations</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="border-b-2 border-zinc-300 dark:border-zinc-700">
+              <th class="py-3 px-4 text-left">Config</th>
+              <th class="py-3 px-4 text-left">Encoder Location</th>
+              <th class="py-3 px-4 text-left">Accuracy</th>
+              <th class="py-3 px-4 text-left">Stability</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Open loop</td>
+              <td class="py-3 px-4">None (stepper)</td>
+              <td class="py-3 px-4 text-red-400">Poor</td>
+              <td class="py-3 px-4 text-zinc-500">N/A</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 bg-blue-950/20">
+              <td class="py-3 px-4 font-medium text-blue-400">Semi-closed ← You</td>
+              <td class="py-3 px-4">Motor shaft encoder</td>
+              <td class="py-3 px-4 text-amber-400">Good (±25 μm)</td>
+              <td class="py-3 px-4 text-green-400">Easier to tune</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Closed loop</td>
+              <td class="py-3 px-4">Table (linear encoder)</td>
+              <td class="py-3 px-4 text-green-400">Highest (±1–5 μm)</td>
+              <td class="py-3 px-4 text-amber-400">Harder to tune</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Hybrid</td>
+              <td class="py-3 px-4">Motor + table (both)</td>
+              <td class="py-3 px-4 text-green-400">Best of both</td>
+              <td class="py-3 px-4 text-red-400">Most complex</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout nise-block mt-4">
+        <div class="callout-label">📘 Nise Theory — Loop Config Changes Your Plant</div>
+        <p><strong>Semi-closed:</strong> Feedback measures $\theta_{motor}$. Ball screw converts: $x = \frac{lead}{2\pi} \cdot \theta_{motor}$ — a constant gain. No extra dynamics added. Plant $G(s)$ = motor TF directly.</p>
+        <p class="mt-2"><strong>Full closed:</strong> Feedback includes mechanical compliance between motor and table → extra poles, potential resonant pair → harder to stabilize.</p>
+      </div>
+    </section>
+
+    <!-- 1.7 -->
+    <section id="nck-pipeline" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">1.7 CNC System Architecture — The NCK Pipeline</h2>
+      <div class="mb-4 overflow-x-auto">
+        <pre class="mermaid">flowchart TD
+  subgraph MMI["MMI — COMET"]
+    U[User / Part Program]
+  end
+  subgraph NCK["NCK — ACCURET+"]
+    I[Interpreter\nG-code → Motion commands]
+    IP[Interpolator\nMotion → Position targets per ms]
+    AD[Acc / Dec\nSmooth velocity S-curve]
+    PC[Position Controller\nPID → Motor current]
+  end
+  subgraph PLC["PLC"]
+    IO[Coolant · Doors · Spindle]
+  end
+  U --> I --> IP --> AD --> PC --> Motor
+  MMI --- PLC
+  style NCK fill:#1e3a5f22,stroke:#60a5fa
+  style MMI fill:#14532d22,stroke:#4ade80
+  style PLC fill:#3b076422,stroke:#c084fc</pre>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="border-b-2 border-zinc-300 dark:border-zinc-700">
+              <th class="py-3 px-4 text-left">Stage</th>
+              <th class="py-3 px-4 text-left">Input</th>
+              <th class="py-3 px-4 text-left">Output</th>
+              <th class="py-3 px-4 text-left">Book Chapter</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Interpreter</td>
+              <td class="py-3 px-4">G-code / Sequence text</td>
+              <td class="py-3 px-4">Motion commands (endpoints, feedrates)</td>
+              <td class="py-3 px-4 text-zinc-400">Ch 2</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Interpolator</td>
+              <td class="py-3 px-4">Motion commands</td>
+              <td class="py-3 px-4">Position targets per ms</td>
+              <td class="py-3 px-4 text-zinc-400">Ch 3</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Acc / Dec</td>
+              <td class="py-3 px-4">Position targets</td>
+              <td class="py-3 px-4">Smoothed velocity profile (S-curve)</td>
+              <td class="py-3 px-4 text-zinc-400">Ch 4</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4 font-medium">Position Controller</td>
+              <td class="py-3 px-4">Smoothed targets</td>
+              <td class="py-3 px-4">Motor current command (PID output)</td>
+              <td class="py-3 px-4 text-zinc-400">Ch 5</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout you-block mt-4">
+        <div class="callout-label">🔧 Debugging by Stage</div>
+        <ul class="space-y-1 text-sm">
+          <li>❌ <strong>Wrong endpoint?</strong> → Interpreter or coordinate system</li>
+          <li>❌ <strong>Path deviation during motion?</strong> → Interpolator or Acc/Dec</li>
+          <li>❌ <strong>Settling too slow / oscillating at rest?</strong> → Position Controller (PID tuning)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Summary -->
+    <section id="summary-table" class="mb-14">
+      <h2 class="text-2xl font-bold mb-5 pb-2 border-b border-zinc-200 dark:border-zinc-800">Summary: CNC Book Ch1 ↔ Nise Ch2 Connections</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="border-b-2 border-zinc-300 dark:border-zinc-700">
+              <th class="py-3 px-4 text-left text-green-400">CNC Book Concept</th>
+              <th class="py-3 px-4 text-left text-purple-400">Nise Theory Behind It</th>
+              <th class="py-3 px-4 text-left text-blue-400">Why It Matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4">PMSM controlled by FOC</td>
+              <td class="py-3 px-4">DC motor TF: dq-frame makes PMSM behave like DC</td>
+              <td class="py-3 px-4">This is the plant $G(s)$ your PID tunes against</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4">Flexible coupling (motor → ball screw)</td>
+              <td class="py-3 px-4">Mass-spring-damper adds poles to plant (Nise §2.5)</td>
+              <td class="py-3 px-4">Why high $K_p$ causes mechanical ringing</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4">Semi-closed loop (motor encoder)</td>
+              <td class="py-3 px-4">Constant gain feedback — no extra dynamics</td>
+              <td class="py-3 px-4">Why semi-closed loop is easier to tune</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4">COMET auto-tune identifies $J$, $D$, $K_t$</td>
+              <td class="py-3 px-4">Fitting DC motor TF to step response (system ID)</td>
+              <td class="py-3 px-4">Understanding auto-tune = understanding the motor model</td>
+            </tr>
+            <tr class="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+              <td class="py-3 px-4">PID gains in position loop</td>
+              <td class="py-3 px-4">Controller $C(s)$ reshapes closed-loop poles of $G(s)$</td>
+              <td class="py-3 px-4">Foundation of Ch4–6 in both books</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-400">
+      Study notes — CNC Book Ch1 (primary) + Nise Ch2 §2.8 · ETEL ACCURET+ context · 2026-07-02
+    </footer>
+  </main>
+</div>
+
+<script>
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    localStorage.theme = dark ? 'dark' : 'light';
+    if (window.__mermaid) {
+      document.querySelectorAll('.mermaid[data-processed]').forEach(el => el.removeAttribute('data-processed'));
+      window.__mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'default', securityLevel: 'loose' });
+      window.__mermaid.run();
+    }
+  });
+
+  hljs.highlightAll();
+
+  document.querySelectorAll('pre > code').forEach(code => {
+    const pre = code.parentElement;
+    if (pre.classList.contains('mermaid')) return;
+    pre.classList.add('has-copy');
+    const btn = document.createElement('button');
+    btn.textContent = 'copy';
+    btn.className = 'copy-btn no-print text-xs px-2 py-1 rounded bg-zinc-700 text-zinc-100 hover:bg-zinc-600';
+    btn.style.opacity = '0.6';
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(code.innerText);
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 1200);
+    });
+    pre.appendChild(btn);
+  });
+
+  const tocLinks = document.querySelectorAll('.toc a');
+  const sections = [...tocLinks].map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if (sections.length) {
+    const onScroll = () => {
+      const y = window.scrollY + 120;
+      let active = sections[0];
+      for (const s of sections) if (s.offsetTop <= y) active = s;
+      tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + active.id));
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>
+</body>
+</html>
